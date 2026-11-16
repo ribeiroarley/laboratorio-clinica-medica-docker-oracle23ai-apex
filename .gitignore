@@ -1,0 +1,26 @@
+# Variaveis de Ambiente e Chaves API
+.env
+*.env
+.env.local
+
+# Certificados e Wallets Oracle (OCI)
+wallet/
+Wallet_*/
+cwallet.sso
+ewallet.p12
+sqlnet.ora
+tnsnames.ora
+
+# Arquivos de IDE e Sistema Operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs e Temporarios
+*.log
+tmp/
+temp/
+__pycache__/
+*.pyc
+.venv/

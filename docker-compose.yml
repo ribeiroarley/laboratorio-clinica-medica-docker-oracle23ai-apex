@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db_clinica:
+    container_name: laboratorio-clinica-medica-docker-oracle23ai-apex
+    image: gvenzl/oracle-free:23.3-full
+    restart: unless-stopped
+    environment:
+      - ORACLE_PASSWORD=Clinica_2026_Admin!
+    ports:
+      - "1521:1521"
+      - "8080:8080"
+    volumes:
+      - clinica_oradata:/opt/oracle/oradata
+    networks:
+      - clinica_network
+
+  ords_clinica:
+    container_name: laboratorio-clinica-medica-ords
+    image: container-registry.oracle.com/database/ords:latest
+    restart: unless-stopped
+    ports:
+      - "8181:8081"
+    environment:
+      - ORACLE_HOST=db_clinica
+      - ORACLE_PORT=1521
+      - ORACLE_SERVICE=FREEPDB1
+      - ORACLE_PWD=Clinica_2026_Admin!
+      - ORDS_PWD=Clinica_2026_Admin!
+      - DBHOST=db_clinica
+      - DBPORT=1521
+      - DBSERVICENAME=FREEPDB1
+      - ORACLE_USER_PWD=Clinica_2026_Admin!
+    networks:
+      - clinica_network
+    depends_on:
+      - db_clinica
+
+volumes:
+  clinica_oradata:
+    name: clinica_oradata
+
+networks:
+  clinica_network:
+    name: clinica_network
+    driver: bridge
