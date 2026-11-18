@@ -42,7 +42,7 @@ Envie a pasta de scripts do backend para o contêiner de banco e execute o orque
 docker cp backend laboratorio-clinica-medica-docker-oracle23ai-apex:/tmp/backend
 
 # 2. Executar o script bash de orquestracao
-docker exec -it laboratorio-clinica-medica-docker-oracle23ai-apex bash -c "chmod +x /tmp/backend/scripts_orquestracao/orquestrador.sh && /tmp/backend/scripts_orquestracao/orquestrador.sh"
+docker exec -it laboratorio-clinica-medica-docker-oracle23ai-apex bash /tmp/backend/scripts_orquestracao/orquestrador.sh
 ```
 Esse processo compilará as 13 tabelas físicas, roles RBAC, views analíticas, package PL/SQL, triggers LGPD e jobs de manutenção no PDB `FREEPDB1`.
 
@@ -51,7 +51,7 @@ Caso a imagem base do Oracle Database não possua o APEX pré-instalado:
 
 1. **Instalar o APEX no Banco:**
 ```bash
-docker exec -it laboratorio-clinica-medica-docker-oracle23ai-apex bash -c "chmod +x /tmp/backend/scripts_orquestracao/instala_apex.sh && /tmp/backend/scripts_orquestracao/instala_apex.sh"
+docker exec -it laboratorio-clinica-medica-docker-oracle23ai-apex bash /tmp/backend/scripts_orquestracao/instala_apex.sh
 ```
 
 2. **Copiar e Rotear os Arquivos Estáticos (`/i/`) para o ORDS:**
@@ -65,24 +65,27 @@ docker cp ./apex_images laboratorio-clinica-medica-ords:/opt/oracle/apex_images
 # Remover pasta temporaria local (PowerShell: Remove-Item -Recurse -Force ./apex_images)
 rm -rf ./apex_images
 
-# Configurar roteamento de estaticos e modo proxied no ORDS
+# Configurar roteamento de estaticos, porta HTTP e modo proxied no ORDS
 docker exec laboratorio-clinica-medica-ords /opt/oracle/ords/bin/ords --config /etc/ords/config config set standalone.static.path /opt/oracle/apex_images
 docker exec laboratorio-clinica-medica-ords /opt/oracle/ords/bin/ords --config /etc/ords/config config set standalone.static.context.path /i
+docker exec laboratorio-clinica-medica-ords /opt/oracle/ords/bin/ords --config /etc/ords/config config set standalone.http.port 8081
 docker exec laboratorio-clinica-medica-ords /opt/oracle/ords/bin/ords --config /etc/ords/config config set plsql.gateway.mode proxied
 
 # Reiniciar o servidor ORDS
 docker restart laboratorio-clinica-medica-ords
 ```
 
-### 6. Carga de Autenticação e Usuários RBAC
+### 6. Carga de Autenticação, Usuários e Dados Fictícios
 Para habilitar o login customizado com a função blindada `valida_login_simples`:
 
 ```bash
-docker exec -i laboratorio-clinica-medica-docker-oracle23ai-apex bash -c "sqlplus -s sys/Clinica_2026_Admin\!@localhost:1521/FREEPDB1 as sysdba" <<EOF
-@/tmp/backend/scripts_banco/02_funcao_autenticacao.sql
-@/tmp/backend/scripts_banco/03_fix_autenticacao.sql
-EXIT;
-EOF
+docker exec -i laboratorio-clinica-medica-docker-oracle23ai-apex bash -c "sqlplus -s sys/Clinica_2026_Admin\!@localhost:1521/FREEPDB1 as sysdba '@/tmp/backend/scripts_banco/02_funcao_autenticacao.sql' && sqlplus -s sys/Clinica_2026_Admin\!@localhost:1521/FREEPDB1 as sysdba '@/tmp/backend/scripts_banco/03_fix_autenticacao.sql'"
+```
+
+Para realizar a carga de massa de dados fictícios e realistas nas tabelas do sistema:
+
+```bash
+docker exec -i laboratorio-clinica-medica-docker-oracle23ai-apex bash -c "sqlplus -s sys/Clinica_2026_Admin\!@localhost:1521/FREEPDB1 as sysdba '@/tmp/backend/scripts_banco/04_insert_dados_ficticios.sql'"
 ```
 
 ### 7. Acesso ao Sistema e Credenciais

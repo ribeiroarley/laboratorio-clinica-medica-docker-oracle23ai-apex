@@ -57,3 +57,4 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('----------------------------------------');
 END;
 /
+EXIT;
